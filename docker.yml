@@ -1,0 +1,52 @@
+- name: Installation nginx_tomcat_app
+  hosts: localhost
+
+  tasks:
+
+  - name: Build tomcat_data_image
+    docker_image: 
+      name: tomcat_data_image
+      tag: ex1
+      path: /home/vagrant/docker_tomcat_nginx
+      dockerfile: tomcat_war_deploy.Dockerfile
+      state: present
+
+  - name: Run tomcat_data_container
+    docker_container:
+      name: tomcat_data_container
+      image: tomcat_data_image:ex1
+      state: present
+
+  - name: Build tomcat_image
+    docker_image:
+      name: tomcat_image
+      tag: ex1
+      path: /home/vagrant/docker_tomcat_nginx
+      dockerfile: tomcat.Dockerfile
+      state: present
+
+  - name: Run tomcat_container
+    docker_container: 
+      name: tomcat_container
+      image: tomcat_image:ex1
+      state: started
+      volumes_from:
+        - tomcat_data_container
+   
+  - name: Build nginx_image
+    docker_image:
+      name: nginx_image
+      tag: ex1
+      path: /home/vagrant/docker_tomcat_nginx
+      dockerfile: nginx.Dockerfile
+      state: present
+ 
+  - name: Run nginx_container
+    docker_container:
+      name: nginx_container
+      image: nginx_image:ex1
+      state: started
+      links:
+        - "tomcat_container:tomcat"
+      ports:
+        - "80:80"
